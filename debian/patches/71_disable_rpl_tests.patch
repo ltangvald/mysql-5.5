@@ -3,10 +3,12 @@ Bug-Ubuntu: http://pad.lv/894146
 Forwarded: no, not needed
 Description: disables test to allow build to pass while this is investigated.
 
---- a/mysql-test/suite/rpl/t/disabled.def
-+++ b/mysql-test/suite/rpl/t/disabled.def
-@@ -15,3 +15,4 @@
+Index: mysql-5.5-5.5.30+dfsg/mysql-test/suite/rpl/t/disabled.def
+===================================================================
+--- mysql-5.5-5.5.30+dfsg.orig/mysql-test/suite/rpl/t/disabled.def	2013-03-05 05:45:15.338697730 -0800
++++ mysql-5.5-5.5.30+dfsg/mysql-test/suite/rpl/t/disabled.def	2013-03-05 05:45:15.334697964 -0800
+@@ -14,3 +14,4 @@
+ rpl_spec_variables        : BUG#11755836 2009-10-27 jasonh rpl_spec_variables fails on PB2 hpux
  rpl_get_master_version_and_clock : Bug#11766137 Jan 05 2011 joro Valgrind warnings rpl_get_master_version_and_clock
- rpl_row_until : BUG#59543 Jan 26 2011 alfranio Replication test from eits suite rpl_row_until times out
  rpl_stm_until : BUG#59543 Jan 26 2011 alfranio Replication test from eits suite rpl_row_until times out
 +rpl_heartbeat_basic : Fails intermittently on AMD64 buildds http://pad.lv/894146

@@ -1,3 +1,28 @@
+mysql-5.5 (5.5.30+dfsg-1.1) unstable; urgency=low
+
+  * Non-maintainer upload.
+  * d/p/yassl.patch - patch for CVE-2013-0169 (Closes: #699886)
+
+ -- Michael Stapelberg <stapelberg@debian.org>  Sun, 14 Apr 2013 12:45:53 +0200
+
+mysql-5.5 (5.5.30+dfsg-1) unstable; urgency=low
+
+  * New upstream release.
+  * d/p/debian-mdev382-fixup.patch - patch from MariaDB, Thanks
+    Kristian Nielsen. resolves  CVE-2012-4414 (Closes: #698068)
+
+ -- Clint Byrum <clint@ubuntu.com>  Sun, 24 Mar 2013 16:22:56 -0700
+
+mysql-5.5 (5.5.29+dfsg-1) unstable; urgency=low
+
+  [ Clint Byrum ]
+  * d/mysql-server-5.5.postinst: Patch from Alex Bligh to fix privilege
+    regression that was introduced in the switch from 5.1 to 5.5.
+    (Closes: #692871)
+  * New upstream release. (Closes: #695001) Refreshed patches.
+
+ -- Nicholas Bamber <nicholas@periapt.co.uk>  Fri, 11 Jan 2013 15:29:53 +0000
+
 mysql-5.5 (5.5.28+dfsg-1) unstable; urgency=low
 
   * New upstream release (resolves CVE-2012-3163, CVE-2012-3158, CVE-2012-3177,
