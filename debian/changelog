@@ -1,3 +1,16 @@
+mysql-5.5 (5.5.31+dfsg-0+wheezy1) UNRELEASED; urgency=high
+
+  * New upstream release.
+    SECURITY UPDATE: CVE-2013-2375 CVE-2013-1544 CVE-2013-1532
+    CVE-2013-2389 CVE-2013-2392 CVE-2013-2376 CVE-2013-1511
+    CVE-2013-2391 CVE-2013-1502
+    - Patches refreshed.
+    - d/p/yassl.patch - dropped, applied upstream
+    - d/p/debian-mdev382-fixup.patch: dropped, fixed upstream.
+  * d/control: Updating Vcs-* fields to point at wheezy branch.
+
+ -- Clint Byrum <clint@ubuntu.com>  Mon, 06 May 2013 12:22:55 -0700
+
 mysql-5.5 (5.5.30+dfsg-1.1) unstable; urgency=low
 
   * Non-maintainer upload.
