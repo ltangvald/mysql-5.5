@@ -1,4 +1,30 @@
-mysql-5.5 (5.5.31+dfsg-0+wheezy1) UNRELEASED; urgency=high
+mysql-5.5 (5.5.33+dfsg-0+wheezy1) wheezy-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Imported Upstream version 5.5.33+dfsg
+    - Fixes: CVE-2013-5807 CVE-2013-3839 CVE-2013-3812 CVE-2013-3809
+      CVE-2013-3804 CVE-2013-3802 CVE-2013-3793 CVE-2013-3783 CVE-2013-1861
+  * Update copyright years for upstream files
+  * Add patches to disable the test database and anonymous access
+    d/p/33_scripts__mysql_create_system_tables__no_test.patch,
+    d/p/41_scripts__mysql_install_db.sh__no_test.patch,
+    d/p/50_mysql-test__db_test.patch: Restored from mysql-5.1 package,
+    inadvertently dropped in 5.5 transition. This removes the global
+    anonymous access to the database which is a security concern.
+  * CVE-2013-2162: Insecure creation of the credential file debian.cnf.
+    Set umask to 066 before creating debian.cnf file. (Closes: #711600)
+    (LP: #1185573)
+  * Add 73_fix_rpl_deadlock_innodb_test.patch.
+    Fixes failing rpl.rpl_deadlock_innodb test by ignoring warnings.
+  * Disable more test after dropping the test databases
+    plugin_auth, plugin_auth_qa_1 and plugin_auth_qa_2 fail as they need to
+    operate on test_ databases. Some adaption to either the tests or
+    50_mysql-test__db_test.patch might be further needed.
+  * Add NEWS file to document changes needed to existing databases
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Sat, 14 Dec 2013 22:29:18 +0100
+
+mysql-5.5 (5.5.31+dfsg-0+wheezy1) stable-security; urgency=high
 
   * New upstream release.
     SECURITY UPDATE: CVE-2013-2375 CVE-2013-1544 CVE-2013-1532
@@ -9,7 +35,7 @@ mysql-5.5 (5.5.31+dfsg-0+wheezy1) UNRELEASED; urgency=high
     - d/p/debian-mdev382-fixup.patch: dropped, fixed upstream.
   * d/control: Updating Vcs-* fields to point at wheezy branch.
 
- -- Clint Byrum <clint@ubuntu.com>  Mon, 06 May 2013 12:22:55 -0700
+ -- Clint Byrum <clint@ubuntu.com>  Wed, 08 May 2013 21:33:08 -0700
 
 mysql-5.5 (5.5.30+dfsg-1.1) unstable; urgency=low
 

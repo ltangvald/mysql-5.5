@@ -1,13 +1,11 @@
 Author: Clint Byrum <clint@ubuntu.com>
 Subject: Convenient place to disable tests that are currently failing
 Forwarded: not-needed
-Last-Update: 2012-03-07
+Last-Update: 2013-12-14
 Reviewed-by: Nicholas Bamber <nicholas@periapt.co.uk>
-Index: mysql-5.5-5.5.31+dfsg/mysql-test/t/disabled.def
-===================================================================
---- mysql-5.5-5.5.31+dfsg.orig/mysql-test/t/disabled.def	2013-03-25 06:14:58.000000000 -0700
-+++ mysql-5.5-5.5.31+dfsg/mysql-test/t/disabled.def	2013-05-05 09:43:53.000000000 -0700
-@@ -15,3 +15,8 @@
+--- a/mysql-test/t/disabled.def
++++ b/mysql-test/t/disabled.def
+@@ -15,3 +15,11 @@
  archive-big              : Bug#11817185 2011-03-10 Anitha Disabled since this leads to timeout on Solaris Sparc
  log_tables-big           : Bug#11756699 2010-11-15 mattiasj report already exists
  mysql_embedded           : Bug#12561297 2011-05-14 Anitha Dependent on PB2 changes - eventum#41836
@@ -16,3 +14,6 @@ Index: mysql-5.5-5.5.31+dfsg/mysql-test/t/disabled.def
 +mysqlslap		 : n/a	2012-04-29 Failed once on kfreebsd
 +mysqlhotcopy_isam	 : n/a  2012-04-29 Olaf van der Spek reported this failure
 +mysqlhotcopy_archive	 : n/a  2012-04-29 Olaf van der Spek reported this failure
++plugin_auth              : n/a  2013-12-14 Fails if a test\_% database not accessible (33_scripts__mysql_create_system_tables__no_test.patch)
++plugin_auth_qa_1         : n/a  2013-12-14 Fails if a test\_% database not accessible (33_scripts__mysql_create_system_tables__no_test.patch)
++plugin_auth_qa_2         : n/a  2013-12-14 Fails if a test\_% database not accessible (33_scripts__mysql_create_system_tables__no_test.patch)
