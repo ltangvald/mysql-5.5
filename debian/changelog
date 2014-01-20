@@ -1,4 +1,4 @@
-mysql-5.5 (5.5.35+dfsg-0+wheezy1) UNRELEASED; urgency=high
+mysql-5.5 (5.5.35+dfsg-0+wheezy1) wheezy-security; urgency=high
 
   * SECURITY UPDATE: Update to 5.5.35 to fix security issues:
     - http://www.oracle.com/technetwork/topics/security/cpujan2014-1972949.html
@@ -21,7 +21,7 @@ mysql-5.5 (5.5.35+dfsg-0+wheezy1) UNRELEASED; urgency=high
     this point release.
   * d/control: Update VCS fields for new git location.
 
- -- James Page <james.page@ubuntu.com>  Mon, 20 Jan 2014 09:01:59 +0000
+ -- James Page <jamespage@debian.org>  Mon, 20 Jan 2014 11:13:56 +0000
 
 mysql-5.5 (5.5.33+dfsg-0+wheezy1) wheezy-security; urgency=high
 
