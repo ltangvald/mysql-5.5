@@ -1,3 +1,28 @@
+mysql-5.5 (5.5.35+dfsg-0+wheezy1) UNRELEASED; urgency=high
+
+  * SECURITY UPDATE: Update to 5.5.35 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpujan2014-1972949.html
+    - CVE-2013-5891
+    - CVE-2013-5908
+    - CVE-2014-0386
+    - CVE-2014-0393
+    - CVE-2014-0401
+    - CVE-2014-0402
+    - CVE-2014-0412
+    - CVE-2014-0420
+    - CVE-2014-0437
+  * d/p/debian/patches/33_scripts__mysql_create_system_tables__no_test.patch:
+    Refreshed against new point release.
+  * d/p/50_mysql-test__db_test.patch,
+    d/p/62_disable_tests.patch: 
+    Rework patches to enable plugin_auth, plugin_auth_qa_1 and plugin_auth_qa_2
+    tests disable in 5.5.33+dfsg-0+wheezy1.
+  * d/p/73_fix_rpl_deadlock_innodb_test.patch: Dropped - no longer required for
+    this point release.
+  * d/control: Update VCS fields for new git location.
+
+ -- James Page <james.page@ubuntu.com>  Mon, 20 Jan 2014 09:01:59 +0000
+
 mysql-5.5 (5.5.33+dfsg-0+wheezy1) wheezy-security; urgency=high
 
   * Non-maintainer upload by the Security Team.
