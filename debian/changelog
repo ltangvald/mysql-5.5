@@ -1,3 +1,19 @@
+mysql-5.5 (5.5.37-0+wheezy1) UNRELEASED; urgency=medium
+
+  * SECURITY UPDATE: Update to 5.5.37 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpuapr2014-1972952.html
+    - CVE-2014-0001
+    - CVE-2014-0384
+    - CVE-2014-2419
+    - CVE-2014-2430
+    - CVE-2014-2431
+    - CVE-2014-2432
+    - CVE-2014-2436
+    - CVE-2014-2438
+    - CVE-2014-2440
+
+ -- James Page <jamespage@debian.org>  Thu, 24 Apr 2014 22:06:54 +0100
+
 mysql-5.5 (5.5.35+dfsg-0+wheezy1) wheezy-security; urgency=high
 
   * SECURITY UPDATE: Update to 5.5.35 to fix security issues:
