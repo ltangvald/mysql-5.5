@@ -1,4 +1,4 @@
-# Copyright (c) 2006, 2013, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2014, Oracle and/or its affiliates. All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -329,6 +329,16 @@ IF(SYSCONFDIR)
   SET(DEFAULT_SYSCONFDIR "${SYSCONFDIR}")
 ENDIF()
 
+SET(TMPDIR "P_tmpdir"
+  CACHE PATH
+  "PATH to MySQL TMP dir. Defaults to the P_tmpdir macro in <stdio.h>")
+IF(TMPDIR STREQUAL "P_tmpdir")
+  # Do not quote it, to refer to the P_tmpdir macro.
+  SET(DEFAULT_TMPDIR "P_tmpdir")
+ELSE()
+  # Quote it, to make it a const char string.
+  SET(DEFAULT_TMPDIR "\"${TMPDIR}\"")
+ENDIF()
 
 # Run platform tests
 INCLUDE(configure.cmake)
@@ -406,6 +416,7 @@ IF(NOT WITHOUT_SERVER)
     ADD_SUBDIRECTORY(internal)
   ENDIF()
   ADD_SUBDIRECTORY(packaging/rpm-uln)
+  ADD_SUBDIRECTORY(packaging/rpm-oel)
 ENDIF()
 
 INCLUDE(cmake/abi_check.cmake)
