@@ -1,3 +1,96 @@
+mysql-5.5 (5.5.47-0+deb7u1) wheezy-security; urgency=high
+
+  * Imported Upstream version 5.5.47 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpujan2016-2367955.html
+    - CVE-2016-0546 CVE-2016-0505 CVE-2016-0596 CVE-2016-0597 CVE-2016-0616
+      CVE-2016-0598 CVE-2016-0600 CVE-2016-0606 CVE-2016-0608 CVE-2016-0609
+    (Closes: #811428)
+  * fix-test-suite-failure-caused-by-arbitrary-date-in-the-future-patch is no
+    longer needed, as bug is fixed in new Upstream version
+
+ -- Lars Tangvald <lars.tangvald@oracle.com>  Wed, 13 Jan 2016 12:53:26 +0100
+
+mysql-5.5 (5.5.46-0+deb7u1) wheezy-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Imported Upstream version 5.5.46 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpuoct2015-2367953.html
+    - CVE-2015-4792 CVE-2015-4802 CVE-2015-4815 CVE-2015-4816 CVE-2015-4819
+      CVE-2015-4826 CVE-2015-4830 CVE-2015-4836 CVE-2015-4858 CVE-2015-4861
+      CVE-2015-4870 CVE-2015-4879 CVE-2015-4913
+    (Closes: #802564)
+  * Add fix-test-suite-failure-caused-by-arbitrary-date-in-the-future.patch.
+    Fix test suite failure caused by arbitrary date in the future.
+    Thanks to Marc Deslauriers <marc.deslauriers@canonical.com>
+  * Add revert-to-_sync_lock_test_and_set.patch.
+    Fixes FTBFS on arm and powerpw by reverting to __sync_lock_test_and_set.
+    The gcc version in wheezy is too old to have __atomic_*.
+    Thanks to Marc Deslauriers <marc.deslauriers@canonical.com> for the patch.
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Fri, 23 Oct 2015 18:30:49 +0200
+
+mysql-5.5 (5.5.44-0+deb7u1) wheezy-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Imported Upstream version 5.5.44 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpujul2015-2367936.html
+    - CVE-2015-4752 CVE-2015-4737 CVE-2015-2648 CVE-2015-2643 CVE-2015-2620
+      CVE-2015-2582
+    (Closes: #792445)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Wed, 15 Jul 2015 22:01:14 +0200
+
+mysql-5.5 (5.5.43-0+deb7u1) wheezy-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Imported Upstream version 5.5.43 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpuapr2015-2365600.html
+    - CVE-2015-0433 CVE-2015-0441 CVE-2015-0499 CVE-2015-0501 CVE-2015-0505
+      CVE-2015-2568 CVE-2015-2571 CVE-2015-2573
+    (Closes: #782645)
+  * Update copyright years for upstream files
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Fri, 17 Apr 2015 20:14:17 +0200
+
+mysql-5.5 (5.5.41-0+wheezy1) wheezy-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Imported Upstream version 5.5.41 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpujan2015-1972971.html
+    - CVE-2014-6568, CVE-2015-0374, CVE-2015-0381, CVE-2015-0382,
+      CVE-2015-0411, CVE-2015-0432
+    (Closes: #775881)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Wed, 21 Jan 2015 20:04:11 +0100
+
+mysql-5.5 (5.5.40-0+wheezy1) wheezy-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Imported Upstream version 5.5.40 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpuoct2014-1972960.html
+    - CVE-2012-5615, CVE-2014-4274, CVE-2014-4287, CVE-2014-6463,
+      CVE-2014-6464, CVE-2014-6469, CVE-2014-6478, CVE-2014-6484,
+      CVE-2014-6491, CVE-2014-6494, CVE-2014-6495, CVE-2014-6496,
+      CVE-2014-6500, CVE-2014-6505, CVE-2014-6507, CVE-2014-6520,
+      CVE-2014-6530, CVE-2014-6551, CVE-2014-6555, CVE-2014-6559
+    (Closes: #765663)
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Sat, 18 Oct 2014 18:13:19 +0200
+
+mysql-5.5 (5.5.38-0+wheezy1) wheezy-security; urgency=high
+
+  * Non-maintainer upload by the Security Team.
+  * Imported Upstream version 5.5.38 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpujul2014-1972956.html
+    - CVE-2014-2494
+    - CVE-2014-4207
+    - CVE-2014-4258
+    - CVE-2014-4260
+   (Closes: #754941)
+  * Update copyright years for upstream files
+
+ -- Salvatore Bonaccorso <carnil@debian.org>  Sat, 19 Jul 2014 16:15:21 +0200
+
 mysql-5.5 (5.5.37-0+wheezy1) wheezy-security; urgency=medium
 
   * SECURITY UPDATE: Update to 5.5.37 to fix security issues:

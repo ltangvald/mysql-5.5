@@ -12,3 +12,4 @@
 94_spelling.patch
 regex_plus.patch
 versioned_symbols.patch
+revert-to-_sync_lock_test_and_set.patch

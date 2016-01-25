@@ -1,0 +1,32 @@
+Description: fix ftbfs on arm and powerpc by reverting to
+ __sync_lock_test_and_set. This unfortunately won't solve the data
+ corruption problem that was addressed by the upstream fix, but the gcc
+ version in precise is too old to have __atomic_*.
+
+ See the following commit:
+ https://github.com/mysql/mysql-server/commit/f59d68eeae37338d7b25f2571407e763fa897e15
+
+Index: mysql-5.5-5.5.46/storage/innobase/include/os0sync.h
+===================================================================
+--- mysql-5.5-5.5.46.orig/storage/innobase/include/os0sync.h	2015-09-18 10:32:54.000000000 -0400
++++ mysql-5.5-5.5.46/storage/innobase/include/os0sync.h	2015-10-22 11:41:43.271210221 -0400
+@@ -339,7 +339,7 @@
+ 	__atomic_clear(ptr, __ATOMIC_RELEASE);
+ }
+ 
+-# elif defined(IB_STRONG_MEMORY_MODEL)
++# else
+ 
+ /** Do an atomic test and set.
+ @param[in,out]	ptr		Memory location to set to non-zero
+@@ -368,10 +368,6 @@
+ 	return(__sync_lock_test_and_set(ptr, 0));
+ }
+ 
+-# else
+-
+-#  error "Unsupported platform"
+-
+ # endif /* HAVE_IB_GCC_ATOMIC_TEST_AND_SET */
+ 
+ #elif defined(HAVE_IB_SOLARIS_ATOMICS)
