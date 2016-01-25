@@ -1,7 +1,7 @@
 #ifndef SQL_STRING_INCLUDED
 #define SQL_STRING_INCLUDED
 
-/* Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -280,6 +280,9 @@ public:
   static bool needs_conversion(uint32 arg_length,
   			       CHARSET_INFO *cs_from, CHARSET_INFO *cs_to,
 			       uint32 *offset);
+  static bool needs_conversion_on_storage(uint32 arg_length,
+                                          CHARSET_INFO *cs_from,
+                                          CHARSET_INFO *cs_to);
   bool copy_aligned(const char *s, uint32 arg_length, uint32 offset,
 		    CHARSET_INFO *cs);
   bool set_or_copy_aligned(const char *s, uint32 arg_length, CHARSET_INFO *cs);
@@ -429,4 +432,7 @@ static inline bool check_if_only_end_space(CHARSET_INFO *cs, char *str,
   return str+ cs->cset->scan(cs, str, end, MY_SEQ_SPACES) == end;
 }
 
+bool
+validate_string(CHARSET_INFO *cs, const char *str, uint32 length,
+                size_t *valid_length, bool *length_error);
 #endif /* SQL_STRING_INCLUDED */

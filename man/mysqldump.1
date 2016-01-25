@@ -2,12 +2,12 @@
 .\"     Title: \fBmysqldump\fR
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 03/14/2014
+.\"      Date: 11/06/2015
 .\"    Manual: MySQL Database System
 .\"    Source: MySQL 5.5
 .\"  Language: English
 .\"
-.TH "\FBMYSQLDUMP\FR" "1" "03/14/2014" "MySQL 5\&.5" "MySQL Database System"
+.TH "\FBMYSQLDUMP\FR" "1" "11/06/2015" "MySQL 5\&.5" "MySQL Database System"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -38,11 +38,44 @@ mysqldump \- a database backup program
 .HP \w'\fBmysqldump\ [\fR\fB\fIoptions\fR\fR\fB]\ [\fR\fB\fIdb_name\fR\fR\fB\ [\fR\fB\fItbl_name\fR\fR\fB\ \&.\&.\&.]]\fR\ 'u
 \fBmysqldump [\fR\fB\fIoptions\fR\fR\fB] [\fR\fB\fIdb_name\fR\fR\fB [\fR\fB\fItbl_name\fR\fR\fB \&.\&.\&.]]\fR
 .SH "DESCRIPTION"
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Performance and Scalability Considerations
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Invocation Syntax
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Option Syntax - Alphabetical Summary
+.RE
 .PP
 The
 \fBmysqldump\fR
-client is a utility that performs
-logical backups, producing a set of SQL statements that can be run to reproduce the original schema objects, table data, or both\&. It dumps one or more MySQL database for backup or transfer to another SQL server\&. The
+client utility performs
+logical backups, producing a set of SQL statements that can be executed to reproduce the original database object definitions and table data\&. It dumps one or more MySQL databases for backup or transfer to another SQL server\&. The
 \fBmysqldump\fR
 command can also generate output in CSV, other delimited text, or XML format\&.
 .PP
@@ -59,9 +92,9 @@ if the
 \fB\-\-single\-transaction\fR
 option is not used\&. Certain options might require other privileges as noted in the option descriptions\&.
 .PP
-To reload a dump file, you must have the same privileges needed to create each of the dumped objects by issuing
+To reload a dump file, you must have the privileges required to execute the statements that it contains, such as the appropriate
 CREATE
-statements manually\&.
+privileges for objects created by those statements\&.
 .PP
 \fBmysqldump\fR
 output can include
@@ -75,8 +108,48 @@ MyISAM
 tables, you can also use
 \fBmysqlhotcopy\fR
 for this purpose\&.
-        Performance and Scalability Considerations
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
 .PP
+A dump made using PowerShell on Windows with output redirection creates a file that has UTF\-16 encoding:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+shell> \fBmysqldump [options] > dump\&.sql\fR
+.fi
+.if n \{\
+.RE
+.\}
+.PP
+However, UTF\-16 is not permitted as a connection character set (see
+Section\ \&10.1.4, \(lqConnection Character Sets and Collations\(rq), so the dump file will not load correctly\&. To work around this issue, use the
+\fB\-\-result\-file\fR
+option, which creates the output in ASCII format:
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+shell> \fBmysqldump [options] \-\-result\-file=dump\&.sql\fR
+.fi
+.if n \{\
+.RE
+.\}
+.sp .5v
+.RE
+Performance and Scalability Considerations.PP
 mysqldump
 advantages include the convenience and flexibility of viewing or even editing the output before restoring\&. You can clone databases for development and DBA work, or produce slight variations of an existing database for testing\&. It is not intended as a fast or scalable solution for backing up substantial amounts of data\&. With large data sizes, even if the backup step takes a reasonable time, restoring the data can be very slow because replaying the SQL statements involves disk I/O for insertion, index creation, and so on\&.
 .PP
@@ -105,7 +178,7 @@ InnoDB
 backups with minimal disruption; it can also back up tables from
 MyISAM
 and other storage engines; and it provides a number of convenient options to accommodate different backup scenarios\&. See
-Section\ \&24.2, \(lqMySQL Enterprise Backup\(rq\&.
+Section\ \&25.2, \(lqMySQL Enterprise Backup Overview\(rq\&.
 .RE
 .sp
 .RS 4
@@ -150,8 +223,7 @@ option\&.
 For additional information about
 \fBmysqldump\fR, see
 Section\ \&7.4, \(lqUsing mysqldump for Backups\(rq\&.
-        Syntax
-.PP
+Invocation Syntax.PP
 There are in general three ways to use
 \fBmysqldump\fR\(emin order to dump a set of one or more tables, a set of one or more complete databases, or an entire MySQL server\(emas shown here:
 .sp
@@ -177,12 +249,12 @@ option\&.
 \fBmysqldump\fR
 does not dump the
 INFORMATION_SCHEMA
-database by default\&.
-\fBmysqldump\fR
-dumps
-INFORMATION_SCHEMA
-only if you name it explicitly on the command line, although currently you must also use the
+or
+performance_schema
+database by default\&. To dump either of these, name it explicitly on the command line and also use the
 \fB\-\-skip\-lock\-tables\fR
+option\&. You can also name them with the
+\fB\-\-databases\fR
 option\&. Before MySQL 5\&.5
 \fBmysqldump\fR
 silently ignores
@@ -339,16 +411,14 @@ instead\&.
 For additional information about
 \fBmysqldump\fR, see
 Section\ \&7.4, \(lqUsing mysqldump for Backups\(rq\&.
-.PP
+Option Syntax \- Alphabetical Summary.PP
 \fBmysqldump\fR
 supports the following options, which can be specified on the command line or in the
 [mysqldump]
 and
 [client]
-groups of an option file\&.
-\fBmysqldump\fR
-also supports the options for processing option files described at
-Section\ \&4.2.3.4, \(lqCommand-Line Options that Affect Option-File Handling\(rq\&.
+groups of an option file\&. For information about option files used by MySQL programs, see
+Section\ \&4.2.6, \(lqUsing Option Files\(rq\&.
 .sp
 .RS 4
 .ie n \{\
@@ -378,7 +448,7 @@ Display a help message and exit\&.
 .\" add-drop-database option: mysqldump
 \fB\-\-add\-drop\-database\fR
 .sp
-Add a
+Write a
 DROP DATABASE
 statement before each
 CREATE DATABASE
@@ -403,7 +473,7 @@ statements are written unless one of those options is specified\&.
 .\" add-drop-table option: mysqldump
 \fB\-\-add\-drop\-table\fR
 .sp
-Add a
+Write a
 DROP TABLE
 statement before each
 CREATE TABLE
@@ -422,7 +492,7 @@ statement\&.
 .\" add-drop-trigger option: mysqldump
 \fB\-\-add\-drop\-trigger\fR
 .sp
-Add a
+Write a
 DROP TRIGGER
 statement before each
 CREATE TRIGGER
@@ -553,7 +623,7 @@ statement at the end of the output\&. This option was added in MySQL 5\&.5\&.3\&
 .\" bind-address option: mysqldump
 \fB\-\-bind\-address=\fR\fB\fIip_address\fR\fR
 .sp
-On a computer having multiple network interfaces, this option can be used to select which interface is employed when connecting to the MySQL server\&.
+On a computer having multiple network interfaces, use this option to select which interface to use for connecting to the MySQL server\&.
 .sp
 This option is supported only in the version of
 \fBmysqldump\fR
@@ -570,7 +640,7 @@ that is supplied with MySQL Cluster\&. It is not available in standard MySQL Ser
 .\}
 .\" mysqldump: character-sets-dir option
 .\" character-sets-dir option: mysqldump
-\fB\-\-character\-sets\-dir=\fR\fB\fIpath\fR\fR
+\fB\-\-character\-sets\-dir=\fR\fB\fIdir_name\fR\fR
 .sp
 The directory where character sets are installed\&. See
 Section\ \&10.5, \(lqCharacter Set Configuration\(rq\&.
@@ -784,7 +854,7 @@ Print debugging information and memory and CPU usage statistics when the program
 .\" default-auth option: mysqldump
 \fB\-\-default\-auth=\fR\fB\fIplugin\fR\fR
 .sp
-The client\-side authentication plugin to use\&. See
+A hint about the client\-side authentication plugin to use\&. See
 Section\ \&6.3.6, \(lqPluggable Authentication\(rq\&.
 .sp
 This option was added in MySQL 5\&.5\&.9\&.
@@ -808,8 +878,71 @@ as the default character set\&. See
 Section\ \&10.5, \(lqCharacter Set Configuration\(rq\&. If no character set is specified,
 \fBmysqldump\fR
 uses
-utf8, and earlier versions use
-latin1\&.
+utf8\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: defaults-extra-file option
+.\" defaults-extra-file option: mysqldump
+\fB\-\-defaults\-extra\-file=\fR\fB\fIfile_name\fR\fR
+.sp
+Read this option file after the global option file but (on Unix) before the user option file\&. If the file does not exist or is otherwise inaccessible, an error occurs\&. Before MySQL 5\&.5\&.8,
+\fIfile_name\fR
+must be the full path name to the file\&. As of MySQL 5\&.5\&.8, the name is interpreted relative to the current directory if given as a relative path name\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: defaults-file option
+.\" defaults-file option: mysqldump
+\fB\-\-defaults\-file=\fR\fB\fIfile_name\fR\fR
+.sp
+Use only the given option file\&. If the file does not exist or is otherwise inaccessible, an error occurs\&. Before MySQL 5\&.5\&.8,
+\fIfile_name\fR
+must be the full path name to the file\&. As of MySQL 5\&.5\&.8, the name is interpreted relative to the current directory if given as a relative path name\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: defaults-group-suffix option
+.\" defaults-group-suffix option: mysqldump
+\fB\-\-defaults\-group\-suffix=\fR\fB\fIstr\fR\fR
+.sp
+Read not only the usual option groups, but also groups with the usual names and a suffix of
+\fIstr\fR\&. For example,
+\fBmysqldump\fR
+normally reads the
+[client]
+and
+[mysqldump]
+groups\&. If the
+\fB\-\-defaults\-group\-suffix=_other\fR
+option is given,
+\fBmysqldump\fR
+also reads the
+[client_other]
+and
+[mysqldump_other]
+groups\&.
 .RE
 .sp
 .RS 4
@@ -972,7 +1105,9 @@ This option was added in MySQL 5\&.5\&.3\&.
 \fB\-\-events\fR,
 \fB\-E\fR
 .sp
-Include Event Scheduler events for the dumped databases in the output\&.
+Include Event Scheduler events for the dumped databases in the output\&. This option requires the
+EVENT
+privileges for those databases\&.
 .RE
 .sp
 .RS 4
@@ -988,9 +1123,9 @@ Include Event Scheduler events for the dumped databases in the output\&.
 \fB\-\-extended\-insert\fR,
 \fB\-e\fR
 .sp
-Use multiple\-row
+Write
 INSERT
-syntax that include several
+statements using multiple\-row syntax that includes several
 VALUES
 lists\&. This results in a smaller dump file and speeds up inserts when the file is reloaded\&.
 .RE
@@ -1120,6 +1255,26 @@ exits with an error message\&. With
 \fB\-\-force\fR,
 \fBmysqldump\fR
 prints the error message, but it also writes an SQL comment containing the view definition to the dump output and continues executing\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: enable-cleartext-plugin option
+.\" enable-cleartext-plugin option: mysqldump
+\fB\-\-enable\-cleartext\-plugin\fR
+.sp
+Enable the
+mysql_clear_password
+cleartext authentication plugin\&. (See
+Section\ \&6.3.7.5, \(lqThe Cleartext Client-Side Authentication Plugin\(rq\&.)
+.sp
+This option was added in MySQL 5\&.5\&.47\&.
 .RE
 .sp
 .RS 4
@@ -1286,6 +1441,12 @@ because it does not need to lock the tables at all\&.
 Because
 \fB\-\-lock\-tables\fR
 locks tables for each database separately, this option does not guarantee that the tables in the dump file are logically consistent between databases\&. Tables in different databases may be dumped in completely different states\&.
+.sp
+Some options, such as
+\fB\-\-opt\fR, automatically enable
+\fB\-\-lock\-tables\fR\&. If you want to override this, use
+\fB\-\-skip\-lock\-tables\fR
+at the end of the option list\&.
 .RE
 .sp
 .RS 4
@@ -1523,7 +1684,7 @@ statements\&.
 \fB\-\-no\-create\-db\fR,
 \fB\-n\fR
 .sp
-This option suppresses the
+Suppress the
 CREATE DATABASE
 statements that are otherwise included in the output if the
 \fB\-\-databases\fR
@@ -1547,7 +1708,7 @@ option is given\&.
 .sp
 Do not write
 CREATE TABLE
-statements that re\-create each dumped table\&.
+statements that create each dumped table\&.
 .if n \{\
 .sp
 .\}
@@ -1562,7 +1723,7 @@ statements that re\-create each dumped table\&.
 .br
 This option does
 \fInot\fR
-not exclude statements creating log file groups or tablespaces from
+exclude statements creating log file groups or tablespaces from
 \fBmysqldump\fR
 output; however, you can use the
 \fB\-\-no\-tablespaces\fR
@@ -1587,6 +1748,23 @@ option for this purpose\&.
 Do not write any table row information (that is, do not dump table contents)\&. This is useful if you want to dump only the
 CREATE TABLE
 statement for the table (for example, to create an empty copy of the table by loading the dump file)\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: no-defaults option
+.\" no-defaults option: mysqldump
+\fB\-\-no\-defaults\fR
+.sp
+Do not read any option files\&. If program startup fails due to reading unknown options from an option file,
+\fB\-\-no\-defaults\fR
+can be used to prevent them from being read\&.
 .RE
 .sp
 .RS 4
@@ -1728,9 +1906,9 @@ On Windows, connect to the server using a named pipe\&. This option applies only
 .\}
 .\" mysqldump: plugin-dir option
 .\" plugin-dir option: mysqldump
-\fB\-\-plugin\-dir=\fR\fB\fIpath\fR\fR
+\fB\-\-plugin\-dir=\fR\fB\fIdir_name\fR\fR
 .sp
-The directory in which to look for plugins\&. It may be necessary to specify this option if the
+The directory in which to look for plugins\&. Specify this option if the
 \fB\-\-default\-auth\fR
 option is used to specify an authentication plugin but
 \fBmysqldump\fR
@@ -1754,6 +1932,21 @@ This option was added in MySQL 5\&.5\&.9\&.
 \fB\-P \fR\fB\fIport_num\fR\fR
 .sp
 The TCP/IP port number to use for the connection\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: print-defaults option
+.\" print-defaults option: mysqldump
+\fB\-\-print\-defaults\fR
+.sp
+Print the program name and all options that it gets from option files\&.
 .RE
 .sp
 .RS 4
@@ -1848,11 +2041,13 @@ statements\&.
 \fB\-\-result\-file=\fR\fB\fIfile_name\fR\fR,
 \fB\-r \fR\fB\fIfile_name\fR\fR
 .sp
-Direct output to a given file\&. This option should be used on Windows to prevent newline
+Direct output to the named file\&. The result file is created and its previous contents overwritten, even if an error occurs while generating the dump\&.
+.sp
+This option should be used on Windows to prevent newline
 \(lq\en\(rq
 characters from being converted to
 \(lq\er\en\(rq
-carriage return/newline sequences\&. The result file is created and its previous contents overwritten, even if an error occurs while generating the dump\&.
+carriage return/newline sequences\&.
 .RE
 .sp
 .RS 4
@@ -1872,15 +2067,17 @@ Include stored routines (procedures and functions) for the dumped databases in t
 SELECT
 privilege for the
 mysql\&.proc
-table\&. The output generated by using
+table\&.
+.sp
+The output generated by using
 \fB\-\-routines\fR
 contains
 CREATE PROCEDURE
 and
 CREATE FUNCTION
-statements to re\-create the routines\&. However, these statements do not include attributes such as the routine creation and modification timestamps\&. This means that when the routines are reloaded, they will be created with the timestamps equal to the reload time\&.
+statements to create the routines\&. However, these statements do not include attributes such as the routine creation and modification timestamps, so when the routines are reloaded, they are created with timestamps equal to the reload time\&.
 .sp
-If you require routines to be re\-created with their original timestamp attributes, do not use
+If you require routines to be created with their original timestamp attributes, do not use
 \fB\-\-routines\fR\&. Instead, dump and reload the contents of the
 mysql\&.proc
 table directly, using a MySQL account that has appropriate privileges for the
@@ -1904,12 +2101,32 @@ option\&. (Bug #11760384, Bug #52792)
 .\" set-charset option: mysqldump
 \fB\-\-set\-charset\fR
 .sp
-Add
+Write
 SET NAMES \fIdefault_character_set\fR
 to the output\&. This option is enabled by default\&. To suppress the
 SET NAMES
 statement, use
 \fB\-\-skip\-set\-charset\fR\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+.\" mysqldump: shared-memory-base-name option
+.\" shared-memory-base-name option: mysqldump
+\fB\-\-shared\-memory\-base\-name=\fR\fB\fIname\fR\fR
+.sp
+On Windows, the shared\-memory name to use, for connections made using shared memory to a local server\&. The default value is
+MYSQL\&. The shared\-memory name is case sensitive\&.
+.sp
+The server must be started with the
+\fB\-\-shared\-memory\fR
+option to enable shared\-memory connections\&.
 .RE
 .sp
 .RS 4
@@ -2056,8 +2273,8 @@ Section\ \&6.3.9.4, \(lqSSL Command Options\(rq\&.
 .\}
 .\" mysqldump: tab option
 .\" tab option: mysqldump
-\fB\-\-tab=\fR\fB\fIpath\fR\fR,
-\fB\-T \fR\fB\fIpath\fR\fR
+\fB\-\-tab=\fR\fB\fIdir_name\fR\fR,
+\fB\-T \fR\fB\fIdir_name\fR\fR
 .sp
 Produce tab\-separated text\-format data files\&. For each dumped table,
 \fBmysqldump\fR
@@ -2396,15 +2613,9 @@ option),
 \fBmysqldump\fR
 creates rows up to
 net_buffer_length
-length\&. If you increase this variable, you should also ensure that the
+bytes long\&. If you increase this variable, ensure that the MySQL server
 net_buffer_length
-variable in the MySQL server is at least this large\&.
-.sp
-Some options, such as
-\fB\-\-opt\fR, automatically enable
-\fB\-\-lock\-tables\fR\&. If you want to override this, use
-\fB\-\-skip\-lock\-tables\fR
-at the end of the option list\&.
+system variable has a value at least this large\&.
 .RE
 .PP
 A common use of
@@ -2494,7 +2705,7 @@ provides a way of making an online backup:
 .RS 4
 .\}
 .nf
-shell> \fBmysqldump \-\-all\-databases \-\-single\-transaction > all_databases\&.sql\fR
+shell> \fBmysqldump \-\-all\-databases \-\-master\-data \-\-single\-transaction > all_databases\&.sql\fR
 .fi
 .if n \{\
 .RE
@@ -2549,11 +2760,11 @@ Section\ \&7.3, \(lqExample Backup and Recovery Strategy\(rq\&.
 .\" mysqldump: workarounds
 .PP
 If you encounter problems backing up views, please read the section that covers restrictions on views which describes a workaround for backing up views when this fails due to insufficient privileges\&. See
-Section\ \&E.5, \(lqRestrictions on Views\(rq\&.
+Section\ \&C.5, \(lqRestrictions on Views\(rq\&.
 .SH "COPYRIGHT"
 .br
 .PP
-Copyright \(co 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright \(co 1997, 2015, Oracle and/or its affiliates. All rights reserved.
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP

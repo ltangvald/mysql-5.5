@@ -1,4 +1,4 @@
-/* Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -2428,7 +2428,7 @@ case SQLCOM_PREPARE:
 #ifdef WITH_PARTITION_STORAGE_ENGINE
     {
       partition_info *part_info= thd->lex->part_info;
-      if (part_info && !(part_info= thd->lex->part_info->get_clone()))
+      if (part_info && !(part_info= thd->lex->part_info->get_clone(true)))
       {
         res= -1;
         goto end_with_restore_list;
@@ -5069,9 +5069,12 @@ check_table_access(THD *thd, ulong requirements,TABLE_LIST *tables,
   for (; i < number && tables != first_not_own_table && tables;
        tables= tables->next_global, i++)
   {
+    TABLE_LIST *const table_ref= tables->correspondent_table ?
+      tables->correspondent_table : tables;
+
     ulong want_access= requirements;
-    if (tables->security_ctx)
-      sctx= tables->security_ctx;
+    if (table_ref->security_ctx)
+      sctx= table_ref->security_ctx;
     else
       sctx= backup_ctx;
 
@@ -5079,26 +5082,26 @@ check_table_access(THD *thd, ulong requirements,TABLE_LIST *tables,
        Register access for view underlying table.
        Remove SHOW_VIEW_ACL, because it will be checked during making view
      */
-    tables->grant.orig_want_privilege= (want_access & ~SHOW_VIEW_ACL);
+    table_ref->grant.orig_want_privilege= (want_access & ~SHOW_VIEW_ACL);
 
-    if (tables->schema_table_reformed)
+    if (table_ref->schema_table_reformed)
     {
-      if (check_show_access(thd, tables))
+      if (check_show_access(thd, table_ref))
         goto deny;
       continue;
     }
 
-    DBUG_PRINT("info", ("derived: %d  view: %d", tables->derived != 0,
-                        tables->view != 0));
-    if (tables->is_anonymous_derived_table() ||
-        (tables->table && tables->table->s &&
-         (int)tables->table->s->tmp_table))
+    DBUG_PRINT("info", ("derived: %d  view: %d", table_ref->derived != 0,
+                        table_ref->view != 0));
+    if (table_ref->is_anonymous_derived_table() ||
+        (table_ref->table && table_ref->table->s &&
+         (int)table_ref->table->s->tmp_table))
       continue;
     thd->security_ctx= sctx;
 
-    if (check_access(thd, want_access, tables->get_db_name(),
-                     &tables->grant.privilege,
-                     &tables->grant.m_internal,
+    if (check_access(thd, want_access, table_ref->get_db_name(),
+                     &table_ref->grant.privilege,
+                     &table_ref->grant.m_internal,
                      0, no_errors))
       goto deny;
   }
@@ -5250,6 +5253,121 @@ bool check_global_access(THD *thd, ulong want_access)
   return 0;
 #endif
 }
+
+
+/**
+  Checks foreign key's parent table access.
+
+  @param thd	       [in]	Thread handler
+  @param create_info   [in]     Create information (like MAX_ROWS, ENGINE or
+                                temporary table flag)
+  @param alter_info    [in]     Initial list of columns and indexes for the
+                                table to be created
+
+  @retval
+   false  ok.
+  @retval
+   true	  error or access denied. Error is sent to client in this case.
+*/
+bool check_fk_parent_table_access(THD *thd,
+                                  HA_CREATE_INFO *create_info,
+                                  Alter_info *alter_info)
+{
+  Key *key;
+  List_iterator<Key> key_iterator(alter_info->key_list);
+  handlerton *db_type= create_info->db_type ? create_info->db_type :
+                                             ha_default_handlerton(thd);
+
+  // Return if engine does not support Foreign key Constraint.
+  if (!ha_check_storage_engine_flag(db_type, HTON_SUPPORTS_FOREIGN_KEYS))
+    return false;
+
+  while ((key= key_iterator++))
+  {
+    if (key->type == Key::FOREIGN_KEY)
+    {
+      TABLE_LIST parent_table;
+      bool is_qualified_table_name;
+      Foreign_key *fk_key= (Foreign_key *)key;
+      LEX_STRING db_name;
+      LEX_STRING table_name= { fk_key->ref_table->table.str,
+                               fk_key->ref_table->table.length };
+      const ulong privileges= (SELECT_ACL | INSERT_ACL | UPDATE_ACL |
+                               DELETE_ACL | REFERENCES_ACL);
+
+      // Check if tablename is valid or not.
+      DBUG_ASSERT(table_name.str != NULL);
+      if (check_table_name(table_name.str, table_name.length, false))
+      {
+        my_error(ER_WRONG_TABLE_NAME, MYF(0), table_name.str);
+        return true;
+      }
+
+      if (fk_key->ref_table->db.str)
+      {
+        is_qualified_table_name= true;
+        db_name.str= (char *) thd->memdup(fk_key->ref_table->db.str,
+                                          fk_key->ref_table->db.length+1);
+        db_name.length= fk_key->ref_table->db.length;
+
+        // Check if database name is valid or not.
+        if (fk_key->ref_table->db.str && check_db_name(&db_name))
+        {
+          my_error(ER_WRONG_DB_NAME, MYF(0), db_name.str);
+          return true;
+        }
+      }
+      else if (thd->lex->copy_db_to(&db_name.str, &db_name.length))
+        return true;
+      else
+        is_qualified_table_name= false;
+
+      // if lower_case_table_names is set then convert tablename to lower case.
+      if (lower_case_table_names)
+      {
+        table_name.str= (char *) thd->memdup(fk_key->ref_table->table.str,
+                                             fk_key->ref_table->table.length+1);
+        table_name.length= my_casedn_str(files_charset_info, table_name.str);
+      }
+
+      parent_table.init_one_table(db_name.str, db_name.length,
+                                  table_name.str, table_name.length,
+                                  table_name.str, TL_IGNORE);
+
+      /*
+       Check if user has any of the "privileges" at table level on
+       "parent_table".
+       Having privilege on any of the parent_table column is not
+       enough so checking whether user has any of the "privileges"
+       at table level only here.
+      */
+      if (check_some_access(thd, privileges, &parent_table) ||
+          parent_table.grant.want_privilege)
+      {
+        if (is_qualified_table_name)
+        {
+          const size_t qualified_table_name_len= NAME_LEN + 1 + NAME_LEN + 1;
+          char *qualified_table_name= (char *) thd->alloc(qualified_table_name_len);
+
+          my_snprintf(qualified_table_name, qualified_table_name_len, "%s.%s",
+                      db_name.str, table_name.str);
+          table_name.str= qualified_table_name;
+        }
+
+        my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0),
+                 "REFERENCES",
+                 thd->security_ctx->priv_user,
+                 thd->security_ctx->host_or_ip,
+                 table_name.str);
+
+        return true;
+      }
+    }
+  }
+
+  return false;
+}
+
 
 /****************************************************************************
 	Check stack size; Send error if there isn't enough stack to continue
@@ -7072,8 +7190,11 @@ bool create_table_precheck(THD *thd, TABLE_LIST *tables,
     if (check_table_access(thd, SELECT_ACL, tables, FALSE, UINT_MAX, FALSE))
       goto err;
   }
-  error= FALSE;
 
+  if (check_fk_parent_table_access(thd, &lex->create_info, &lex->alter_info))
+    goto err;
+
+  error= FALSE;
 err:
   DBUG_RETURN(error);
 }
@@ -7359,7 +7480,7 @@ bool check_host_name(LEX_STRING *str)
 }
 
 
-extern int MYSQLparse(void *thd); // from sql_yacc.cc
+extern int MYSQLparse(class THD *thd); // from sql_yacc.cc
 
 
 /**

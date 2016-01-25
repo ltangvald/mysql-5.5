@@ -1,4 +1,4 @@
-/* Copyright (c) 2000, 2013, Oracle and/or its affiliates. All rights reserved.
+/* Copyright (c) 2000, 2015, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -50,6 +50,7 @@
 #include "hostname.h"
 #include "sql_db.h"
 #include "sql_array.h"
+#include "debug_sync.h"
 
 bool mysql_user_table_is_in_short_password_format= false;
 
@@ -222,6 +223,7 @@ public:
   const char *ssl_cipher, *x509_issuer, *x509_subject;
   LEX_STRING plugin;
   LEX_STRING auth_string;
+  bool can_authenticate;
 
   ACL_USER *copy(MEM_ROOT *root)
   {
@@ -811,6 +813,16 @@ static my_bool acl_load(THD *thd, TABLE_LIST *tables)
   {
     ACL_USER user;
     bzero(&user, sizeof(user));
+
+    /*
+      All accounts can authenticate per default. This will change when
+      we add a new field to the user table.
+
+      Currently this flag is only set to false when authentication is attempted
+      using an unknown user name.
+    */
+    user.can_authenticate= true;
+
     update_hostname(&user.host, get_field(&mem, table->field[0]));
     user.user= get_field(&mem, table->field[1]);
     if (check_no_resolve && hostname_requires_resolving(user.host.hostname))
@@ -1183,6 +1195,8 @@ my_bool acl_reload(THD *thd)
     mysql_mutex_unlock(&acl_cache->lock);
 end:
   close_mysql_tables(thd);
+
+  DEBUG_SYNC(thd, "after_acl_reload");
   DBUG_RETURN(return_val);
 }
 
@@ -1231,7 +1245,8 @@ static ulong get_access(TABLE *form, uint fieldnr, uint *next_field)
 /*
   Return a number which, if sorted 'desc', puts strings in this order:
     no wildcards
-    wildcards
+    strings containg wildcards and non-wildcard characters
+    single muilt-wildcard character('%')
     empty string
 */
 
@@ -1248,7 +1263,16 @@ static ulong get_sort(uint count,...)
   {
     char *start, *str= va_arg(args,char*);
     uint chars= 0;
-    uint wild_pos= 0;           /* first wildcard position */
+    uint wild_pos= 0;
+
+    /*
+      wild_pos
+        0                            if string is empty
+        1                            if string is a single muilt-wildcard
+                                     character('%')
+        first wildcard position + 1  if string containg wildcards and
+                                     non-wildcard characters
+    */
 
     if ((start= str))
     {
@@ -1259,6 +1283,8 @@ static ulong get_sort(uint count,...)
         else if (*str == wild_many || *str == wild_one)
         {
           wild_pos= (uint) (str - start) + 1;
+          if (!(wild_pos == 1 && *str == wild_many && *(++str) == '\0'))
+            wild_pos++;
           break;
         }
         chars= 128;                             // Marker that chars existed
@@ -1465,6 +1491,14 @@ static void acl_insert_user(const char *user, const char *host,
   ACL_USER acl_user;
 
   mysql_mutex_assert_owner(&acl_cache->lock);
+  /*
+     All accounts can authenticate per default. This will change when
+     we add a new field to the user table.
+
+     Currently this flag is only set to false when authentication is attempted
+     using an unknown user name.
+  */
+  acl_user.can_authenticate= true;
 
   acl_user.user=*user ? strdup_root(&mem,user) : 0;
   update_hostname(&acl_user.host, *host ? strdup_root(&mem, host): 0);
@@ -4581,16 +4615,19 @@ bool check_grant(THD *thd, ulong want_access, TABLE_LIST *tables,
        tl && number-- && tl != first_not_own_table;
        tl= tl->next_global)
   {
-    sctx = test(tl->security_ctx) ? tl->security_ctx : thd->security_ctx;
+    TABLE_LIST *const t_ref=
+      tl->correspondent_table ? tl->correspondent_table : tl;
+    sctx = test(t_ref->security_ctx) ? t_ref->security_ctx :
+                                       thd->security_ctx;
 
     const ACL_internal_table_access *access=
-      get_cached_table_access(&tl->grant.m_internal,
-                              tl->get_db_name(),
-                              tl->get_table_name());
+      get_cached_table_access(&t_ref->grant.m_internal,
+                              t_ref->get_db_name(),
+                              t_ref->get_table_name());
 
     if (access)
     {
-      switch(access->check(orig_want_access, &tl->grant.privilege))
+      switch(access->check(orig_want_access, &t_ref->grant.privilege))
       {
       case ACL_INTERNAL_ACCESS_GRANTED:
         /*
@@ -4614,34 +4651,34 @@ bool check_grant(THD *thd, ulong want_access, TABLE_LIST *tables,
     if (!want_access)
       continue;                                 // ok
 
-    if (!(~tl->grant.privilege & want_access) ||
-        tl->is_anonymous_derived_table() || tl->schema_table)
+    if (!(~t_ref->grant.privilege & want_access) ||
+        t_ref->is_anonymous_derived_table() || t_ref->schema_table)
     {
       /*
-        It is subquery in the FROM clause. VIEW set tl->derived after
+        It is subquery in the FROM clause. VIEW set t_ref->derived after
         table opening, but this function always called before table opening.
       */
-      if (!tl->referencing_view)
+      if (!t_ref->referencing_view)
       {
         /*
           If it's a temporary table created for a subquery in the FROM
           clause, or an INFORMATION_SCHEMA table, drop the request for
           a privilege.
         */
-        tl->grant.want_privilege= 0;
+        t_ref->grant.want_privilege= 0;
       }
       continue;
     }
     GRANT_TABLE *grant_table= table_hash_search(sctx->get_host()->ptr(),
                                                 sctx->get_ip()->ptr(),
-                                                tl->get_db_name(),
+                                                t_ref->get_db_name(),
                                                 sctx->priv_user,
-                                                tl->get_table_name(),
+                                                t_ref->get_table_name(),
                                                 FALSE);
 
     if (!grant_table)
     {
-      want_access &= ~tl->grant.privilege;
+      want_access &= ~t_ref->grant.privilege;
       goto err;					// No grants
     }
 
@@ -4652,17 +4689,17 @@ bool check_grant(THD *thd, ulong want_access, TABLE_LIST *tables,
     if (any_combination_will_do)
       continue;
 
-    tl->grant.grant_table= grant_table; // Remember for column test
-    tl->grant.version= grant_version;
-    tl->grant.privilege|= grant_table->privs;
-    tl->grant.want_privilege= ((want_access & COL_ACLS) & ~tl->grant.privilege);
+    t_ref->grant.grant_table= grant_table; // Remember for column test
+    t_ref->grant.version= grant_version;
+    t_ref->grant.privilege|= grant_table->privs;
+    t_ref->grant.want_privilege= ((want_access & COL_ACLS) & ~t_ref->grant.privilege);
 
-    if (!(~tl->grant.privilege & want_access))
+    if (!(~t_ref->grant.privilege & want_access))
       continue;
 
-    if (want_access & ~(grant_table->cols | tl->grant.privilege))
+    if (want_access & ~(grant_table->cols | t_ref->grant.privilege))
     {
-      want_access &= ~(grant_table->cols | tl->grant.privilege);
+      want_access &= ~(grant_table->cols | t_ref->grant.privilege);
       goto err;					// impossible
     }
   }
@@ -5304,14 +5341,21 @@ bool mysql_show_grants(THD *thd,LEX_USER *lex_user)
     global.append ('\'');
     if (acl_user->salt_len)
     {
-      char passwd_buff[SCRAMBLED_PASSWORD_CHAR_LENGTH+1];
-      if (acl_user->salt_len == SCRAMBLE_LENGTH)
-        make_password_from_salt(passwd_buff, acl_user->salt);
+      global.append(STRING_WITH_LEN(" IDENTIFIED BY PASSWORD"));
+      if ((thd->security_ctx->master_access & SUPER_ACL) == SUPER_ACL)
+      {
+        char passwd_buff[SCRAMBLED_PASSWORD_CHAR_LENGTH+1];
+        if (acl_user->salt_len == SCRAMBLE_LENGTH)
+          make_password_from_salt(passwd_buff, acl_user->salt);
+        else
+          make_password_from_salt_323(passwd_buff, (ulong *) acl_user->salt);
+
+        global.append(" \'");
+        global.append(passwd_buff);
+        global.append('\'');
+      }
       else
-        make_password_from_salt_323(passwd_buff, (ulong *) acl_user->salt);
-      global.append(STRING_WITH_LEN(" IDENTIFIED BY PASSWORD '"));
-      global.append(passwd_buff);
-      global.append('\'');
+        global.append(" <secret>");
     }
     /* "show grants" SSL related stuff */
     if (acl_user->ssl_type == SSL_TYPE_ANY)
@@ -7305,11 +7349,14 @@ acl_check_proxy_grant_access(THD *thd, const char *host, const char *user,
     DBUG_RETURN(FALSE);
   }
 
+  mysql_mutex_lock(&acl_cache->lock);
+
   /* check for matching WITH PROXY rights */
   for (uint i=0; i < acl_proxy_users.elements; i++)
   {
     ACL_PROXY_USER *proxy= dynamic_element(&acl_proxy_users, i, 
                                            ACL_PROXY_USER *);
+    DEBUG_SYNC(thd, "before_proxy_matches");
     if (proxy->matches(thd->security_ctx->get_host()->ptr(),
                        thd->security_ctx->user,
                        thd->security_ctx->get_ip()->ptr(),
@@ -7317,10 +7364,12 @@ acl_check_proxy_grant_access(THD *thd, const char *host, const char *user,
         proxy->get_with_grant())
     {
       DBUG_PRINT("info", ("found"));
+      mysql_mutex_unlock(&acl_cache->lock);
       DBUG_RETURN(FALSE);
     }
   }
 
+  mysql_mutex_unlock(&acl_cache->lock);
   my_error(ER_ACCESS_DENIED_NO_PASSWORD_ERROR, MYF(0),
            thd->security_ctx->user,
            thd->security_ctx->host_or_ip);
@@ -8000,6 +8049,10 @@ struct MPVIO_EXT :public MYSQL_PLUGIN_VIO
   char *host;
   Thd_charset_adapter *charset_adapter;
   LEX_STRING acl_user_plugin;
+  bool can_authenticate()
+  {
+    return (acl_user && acl_user->can_authenticate);
+  }
 };
 
 /**
@@ -8301,6 +8354,34 @@ static bool send_plugin_request_packet(MPVIO_EXT *mpvio,
 }
 
 #ifndef NO_EMBEDDED_ACCESS_CHECKS
+
+/**
+  When authentication is attempted using an unknown username a dummy user
+  account with no authentication capabilites is assigned to the connection.
+  This is done increase the cost of enumerating user accounts based on
+  authentication protocol.
+*/
+
+ACL_USER *decoy_user(const LEX_STRING &username,
+                      MEM_ROOT *mem)
+{
+  ACL_USER *user= (ACL_USER *) alloc_root(mem, sizeof(ACL_USER));
+  user->can_authenticate= false;
+  user->user= strmake_root(mem, username.str, username.length);
+  user->auth_string= empty_lex_str;
+  user->ssl_cipher= empty_c_string;
+  user->x509_issuer= empty_c_string;
+  user->x509_subject= empty_c_string;
+  user->salt_len= 0;
+
+  /*
+    For now the common default account is used. Improvements might involve
+    mapping a consistent hash of a username to a range of plugins.
+  */
+  user->plugin= *default_auth_plugin_name;
+  return user;
+}
+
 /**
    Finds acl entry in user database for authentication purposes.
    
@@ -8342,8 +8423,14 @@ static bool find_mpvio_user(MPVIO_EXT *mpvio)
 
   if (!mpvio->acl_user)
   {
-    login_failed_error(mpvio, mpvio->auth_info.password_used);
-    DBUG_RETURN (1);
+    /*
+      Pretend the user exists; let the plugin decide how to handle
+      bad credentials.
+    */
+    LEX_STRING usr= { mpvio->auth_info.user_name,
+                      mpvio->auth_info.user_name_length };
+    mpvio->acl_user= decoy_user(usr, mpvio->mem_root);
+    mpvio->acl_user_plugin= mpvio->acl_user->plugin;
   }
 
   /* user account requires non-default plugin and the client is too old */
@@ -8465,7 +8552,9 @@ static bool parse_com_change_user_packet(MPVIO_EXT *mpvio, uint packet_length)
 
 #ifndef NO_EMBEDDED_ACCESS_CHECKS
   if (find_mpvio_user(mpvio))
+  {
     DBUG_RETURN(1);
+  }
 
   char *client_plugin;
   if (mpvio->client_capabilities & CLIENT_PLUGIN_AUTH)
@@ -9450,6 +9539,8 @@ acl_authenticate(THD *thd, uint connect_errors, uint com_change_user_pkt_len)
 
     if (parse_com_change_user_packet(&mpvio, com_change_user_pkt_len))
     {
+      if (!thd->is_error())
+        login_failed_error(&mpvio, mpvio.auth_info.password_used);
       server_mpvio_update_thd(thd, &mpvio);
       DBUG_RETURN(1);
     }
@@ -9513,6 +9604,11 @@ acl_authenticate(THD *thd, uint connect_errors, uint com_change_user_pkt_len)
       general_log_print(thd, command, (char*) "%s@%s on %s",
                         mpvio.auth_info.user_name, mpvio.auth_info.host_or_ip,
                         mpvio.db.str ? mpvio.db.str : (char*) "");
+  }
+
+  if (res == CR_OK && !mpvio.can_authenticate())
+  {
+    res= CR_ERROR;
   }
 
   if (res > CR_OK && mpvio.status != MPVIO_EXT::SUCCESS)

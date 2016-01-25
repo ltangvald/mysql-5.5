@@ -1,4 +1,4 @@
-# Copyright (c) 2006, 2011, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2006, 2015, Oracle and/or its affiliates. All rights reserved.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -85,10 +85,26 @@ IF(NOT CMAKE_CROSSCOMPILING)
   }"
   HAVE_IB_GCC_ATOMIC_BUILTINS
   )
+  CHECK_C_SOURCE_RUNS(
+  "#include<stdint.h>
+  int main()
+  {
+    unsigned char	c;
+
+    __atomic_test_and_set(&c, __ATOMIC_ACQUIRE);
+    __atomic_clear(&c, __ATOMIC_RELEASE);
+    return(0);
+  }"
+  HAVE_IB_GCC_ATOMIC_TEST_AND_SET
+  )
 ENDIF()
 
 IF(HAVE_IB_GCC_ATOMIC_BUILTINS)
  ADD_DEFINITIONS(-DHAVE_IB_GCC_ATOMIC_BUILTINS=1)
+ENDIF()
+
+IF(HAVE_IB_GCC_ATOMIC_TEST_AND_SET)
+ ADD_DEFINITIONS(-DHAVE_IB_GCC_ATOMIC_TEST_AND_SET=1)
 ENDIF()
 
  # either define HAVE_IB_ATOMIC_PTHREAD_T_GCC or not
@@ -246,6 +262,14 @@ SET(INNOBASE_SOURCES	btr/btr0btr.c btr/btr0cur.c btr/btr0pcur.c btr/btr0sea.c
 			usr/usr0sess.c
 			ut/ut0byte.c ut/ut0dbg.c ut/ut0list.c ut/ut0mem.c ut/ut0rbt.c ut/ut0rnd.c
 			ut/ut0ut.c ut/ut0vec.c ut/ut0wqueue.c ut/ut0bh.c)
+
+# These files have unused result errors, so we skip Werror
+CHECK_C_COMPILER_FLAG("-Werror" HAVE_WERROR)
+IF(HAVE_WERROR)
+  INCLUDE(${MYSQL_CMAKE_SCRIPT_DIR}/compile_flags.cmake)
+  ADD_COMPILE_FLAGS(page/page0zip.c COMPILE_FLAGS "-Wno-error")
+  ADD_COMPILE_FLAGS(ut/ut0ut.c      COMPILE_FLAGS "-Wno-error")
+ENDIF()
 
 IF(WITH_INNODB)
   # Legacy option

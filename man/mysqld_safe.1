@@ -2,12 +2,12 @@
 .\"     Title: \fBmysqld_safe\fR
 .\"    Author: [FIXME: author] [see http://docbook.sf.net/el/author]
 .\" Generator: DocBook XSL Stylesheets v1.78.1 <http://docbook.sf.net/>
-.\"      Date: 03/14/2014
+.\"      Date: 11/06/2015
 .\"    Manual: MySQL Database System
 .\"    Source: MySQL 5.5
 .\"  Language: English
 .\"
-.TH "\FBMYSQLD_SAFE\FR" "1" "03/14/2014" "MySQL 5\&.5" "MySQL Database System"
+.TH "\FBMYSQLD_SAFE\FR" "1" "11/06/2015" "MySQL 5\&.5" "MySQL Database System"
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
 .\" -----------------------------------------------------------------
@@ -70,7 +70,7 @@ are passed to
 if they are specified on the command line, but ignored if they are specified in the
 [mysqld_safe]
 group of an option file\&. See
-Section\ \&4.2.3.3, \(lqUsing Option Files\(rq\&.
+Section\ \&4.2.6, \(lqUsing Option Files\(rq\&.
 .PP
 \fBmysqld_safe\fR
 reads all options from the
@@ -100,13 +100,12 @@ For backward compatibility,
 \fBmysqld_safe\fR
 also reads
 [safe_mysqld]
-sections, although you should rename such sections to
-[mysqld_safe]
-in MySQL 5\&.5 installations\&.
+sections, but to be current you should rename such sections to
+[mysqld_safe]\&.
 .PP
 \fBmysqld_safe\fR
 supports the following options\&. It also reads option files and supports the options for processing them described at
-Section\ \&4.2.3.4, \(lqCommand-Line Options that Affect Option-File Handling\(rq\&.
+Section\ \&4.2.7, \(lqCommand-Line Options that Affect Option-File Handling\(rq\&.
 .sp
 .RS 4
 .ie n \{\
@@ -133,7 +132,7 @@ Display a help message and exit\&.
 .\}
 .\" mysqld_safe: basedir option
 .\" basedir option: mysqld_safe
-\fB\-\-basedir=\fR\fB\fIpath\fR\fR
+\fB\-\-basedir=\fR\fB\fIdir_name\fR\fR
 .sp
 The path to the MySQL installation directory\&.
 .RE
@@ -166,7 +165,7 @@ should be able to create\&. The option value is passed to
 .\}
 .\" mysqld_safe: datadir option
 .\" datadir option: mysqld_safe
-\fB\-\-datadir=\fR\fB\fIpath\fR\fR
+\fB\-\-datadir=\fR\fB\fIdir_name\fR\fR
 .sp
 The path to the data directory\&.
 .RE
@@ -181,7 +180,7 @@ The path to the data directory\&.
 .\}
 .\" mysqld_safe: defaults-extra-file option
 .\" defaults-extra-file option: mysqld_safe
-\fB\-\-defaults\-extra\-file=\fR\fB\fIpath\fR\fR
+\fB\-\-defaults\-extra\-file=\fR\fB\fIfile_name\fR\fR
 .sp
 The name of an option file to be read in addition to the usual option files\&. This must be the first option on the command line if it is used\&. If the file does not exist or is otherwise inaccessible, the server will exit with an error\&.
 .RE
@@ -211,7 +210,7 @@ The name of an option file to be read instead of the usual option files\&. This 
 .\}
 .\" mysqld_safe: ledir option
 .\" ledir option: mysqld_safe
-\fB\-\-ledir=\fR\fB\fIpath\fR\fR
+\fB\-\-ledir=\fR\fB\fIdir_name\fR\fR
 .sp
 If
 \fBmysqld_safe\fR
@@ -245,7 +244,8 @@ Section\ \&5.2.2, \(lqThe Error Log\(rq\&.
 .\" mysqld_safe: malloc-lib option
 .\" mysqld option: malloc-lib
 \fB\-\-malloc\-lib=[\fR\fB\fIlib_name\fR\fR\fB]\fR
-.sp
+.\" memory allocation library
+.\" tcmalloc: memory allocation library
 The name of the library to use for memory allocation instead of the system
 malloc()
 library\&. Any library can be used by specifying its path name, but there is a shortcut form to enable use of the
@@ -406,7 +406,7 @@ option to indicate the path name to the directory where the server is located\&.
 .sp
 This option is similar to the
 \fB\-\-mysqld\fR
-option, but you specify only the suffix for the server program name\&. The basename is assumed to be
+option, but you specify only the suffix for the server program name\&. The base name is assumed to be
 \fBmysqld\fR\&. For example, if you use
 \fB\-\-mysqld\-version=debug\fR,
 \fBmysqld_safe\fR
@@ -472,11 +472,26 @@ Do not read any option files\&. This must be the first option on the command lin
 The number of files that
 \fBmysqld\fR
 should be able to open\&. The option value is passed to
-\fBulimit \-n\fR\&. Note that you need to start
+\fBulimit \-n\fR\&.
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+You must start
 \fBmysqld_safe\fR
 as
 root
-for this to work properly!
+for this to function properly\&.
+.sp .5v
+.RE
 .RE
 .sp
 .RS 4
@@ -504,7 +519,7 @@ The path name of the process ID file\&.
 .\}
 .\" mysqld_safe: plugin-dir option
 .\" plugin-dir option: mysqld_safe
-\fB\-\-plugin\-dir=\fR\fB\fIpath\fR\fR
+\fB\-\-plugin\-dir=\fR\fB\fIdir_name\fR\fR
 .sp
 The path name of the plugin directory\&. This option was added in MySQL 5\&.5\&.3\&.
 .RE
@@ -587,7 +602,7 @@ When
 syslog
 is used, the
 daemon\&.err
-syslog priority/facility is used for all log messages\&.
+syslog facility/severity is used for all log messages\&.
 .RE
 .sp
 .RS 4
@@ -607,11 +622,11 @@ syslog, messages from
 \fBmysqld_safe\fR
 and
 \fBmysqld\fR
-are written with a tag of
+are written with identifiers of
 mysqld_safe
 and
-mysqld, respectively\&. To specify a suffix for the tag, use
-\fB\-\-syslog\-tag=\fR\fB\fItag\fR\fR, which modifies the tags to be
+mysqld, respectively\&. To specify a suffix for the identifiers, use
+\fB\-\-syslog\-tag=\fR\fB\fItag\fR\fR, which modifies the identifiers to be
 mysqld_safe\-\fItag\fR
 and
 mysqld\-\fItag\fR\&.
@@ -688,7 +703,7 @@ mysql> \fBmysqld_safe \-\-defaults\-file=\fR\fB\fIfile_name\fR\fR\fB \-\-port=\f
 The
 \fBmysqld_safe\fR
 script is written so that it normally can start a server that was installed from either a source or a binary distribution of MySQL, even though these types of distributions typically install the server in slightly different locations\&. (See
-Section\ \&2.1.5, \(lqInstallation Layouts\(rq\&.)
+Section\ \&2.1.4, \(lqInstallation Layouts\(rq\&.)
 \fBmysqld_safe\fR
 expects one of the following conditions to be true:
 .sp
@@ -754,7 +769,7 @@ shell> \fBbin/mysqld_safe &\fR
 .PP
 If
 \fBmysqld_safe\fR
-fails, even when invoked from the MySQL installation directory, you can specify the
+fails, even when invoked from the MySQL installation directory, specify the
 \fB\-\-ledir\fR
 and
 \fB\-\-datadir\fR
@@ -789,6 +804,17 @@ options for controlling the destination of these messages:
 .sp -1
 .IP \(bu 2.3
 .\}
+\fB\-\-log\-error=\fR\fB\fIfile_name\fR\fR: Write error messages to the named error file\&.
+.RE
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
 \fB\-\-syslog\fR: Write error messages to
 syslog
 on systems that support the
@@ -810,25 +836,14 @@ in the data directory), or to a named file if the
 \fB\-\-log\-error\fR
 option is given\&.
 .RE
-.sp
-.RS 4
-.ie n \{\
-\h'-04'\(bu\h'+03'\c
-.\}
-.el \{\
-.sp -1
-.IP \(bu 2.3
-.\}
-\fB\-\-log\-error=\fR\fB\fIfile_name\fR\fR: Write error messages to the named error file\&.
-.RE
 .PP
 If none of these options is given, the default is
 \fB\-\-skip\-syslog\fR\&.
 .PP
 If
-\fB\-\-syslog\fR
-and
 \fB\-\-log\-error\fR
+and
+\fB\-\-syslog\fR
 are both given, a warning is issued and
 \fB\-\-log\-error\fR
 takes precedence\&.
@@ -856,7 +871,7 @@ might be overwritten if you upgrade MySQL in the future, so you should make a co
 .SH "COPYRIGHT"
 .br
 .PP
-Copyright \(co 1997, 2014, Oracle and/or its affiliates. All rights reserved.
+Copyright \(co 1997, 2015, Oracle and/or its affiliates. All rights reserved.
 .PP
 This documentation is free software; you can redistribute it and/or modify it only under the terms of the GNU General Public License as published by the Free Software Foundation; version 2 of the License.
 .PP

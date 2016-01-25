@@ -1,5 +1,5 @@
 /*
-   Copyright (c) 2005, 2012, Oracle and/or its affiliates. All rights reserved.
+   Copyright (c) 2005, 2014, Oracle and/or its affiliates. All rights reserved.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -37,6 +37,8 @@
 #include "file.hpp"             // for TaoCrypt Source
 #include "coding.hpp"           // HexDecoder
 #include "helpers.hpp"          // for placement new hack
+#include "rsa.hpp"              // for TaoCrypt RSA key decode
+#include "dsa.hpp"              // for TaoCrypt DSA key decode
 #include <stdio.h>
 
 #ifdef _WIN32
@@ -54,6 +56,8 @@ namespace yaSSL {
 
 int read_file(SSL_CTX* ctx, const char* file, int format, CertType type)
 {
+    int ret = SSL_SUCCESS;
+
     if (format != SSL_FILETYPE_ASN1 && format != SSL_FILETYPE_PEM)
         return SSL_BAD_FILETYPE;
 
@@ -141,8 +145,31 @@ int read_file(SSL_CTX* ctx, const char* file, int format, CertType type)
             }
         }
     }
+
+    if (type == PrivateKey && ctx->privateKey_) {
+        // see if key is valid early
+        TaoCrypt::Source rsaSource(ctx->privateKey_->get_buffer(),
+                                   ctx->privateKey_->get_length());
+        TaoCrypt::RSA_PrivateKey rsaKey;
+        rsaKey.Initialize(rsaSource);
+
+        if (rsaSource.GetError().What()) {
+            // rsa failed see if DSA works
+
+            TaoCrypt::Source dsaSource(ctx->privateKey_->get_buffer(),
+                                       ctx->privateKey_->get_length());
+            TaoCrypt::DSA_PrivateKey dsaKey;
+            dsaKey.Initialize(dsaSource);
+
+            if (rsaSource.GetError().What()) {
+                // neither worked
+                ret = SSL_FAILURE;
+            }
+        }
+    }
+
     fclose(input);
-    return SSL_SUCCESS;
+    return ret;
 }
 
 
@@ -790,7 +817,10 @@ int SSL_CTX_load_verify_locations(SSL_CTX* ctx, const char* file,
             strncpy(name, path, MAX_PATH - 1 - HALF_PATH);
             strncat(name, "/", 1);
             strncat(name, entry->d_name, HALF_PATH);
-            if (stat(name, &buf) < 0) return SSL_BAD_STAT;
+            if (stat(name, &buf) < 0) {
+                closedir(dir);
+                return SSL_BAD_STAT;
+            }
      
             if (S_ISREG(buf.st_mode))
                 ret = read_file(ctx, name, SSL_FILETYPE_PEM, CA);
