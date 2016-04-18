@@ -1,3 +1,12 @@
+mysql-5.5 (5.5.49-0+deb7u1.1) wheezy-security; urgency=high
+
+  * Imported Upstream version 5.5.49 to fix security issues:
+    - http://www.oracle.com/technetwork/topics/security/cpuapr2016-2881694.html
+    - CVE LIST TBA
+    (Closes: #821100)
+
+ -- Lars Tangvald <lars.tangvald@oracle.com>  Mon, 18 Apr 2016 07:31:24 +0200
+
 mysql-5.5 (5.5.47-0+deb7u1) wheezy-security; urgency=high
 
   * Imported Upstream version 5.5.47 to fix security issues:
