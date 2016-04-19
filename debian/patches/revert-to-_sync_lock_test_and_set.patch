@@ -6,27 +6,44 @@ Description: fix ftbfs on arm and powerpc by reverting to
  See the following commit:
  https://github.com/mysql/mysql-server/commit/f59d68eeae37338d7b25f2571407e763fa897e15
 
-Index: mysql-5.5-5.5.46/storage/innobase/include/os0sync.h
-===================================================================
---- mysql-5.5-5.5.46.orig/storage/innobase/include/os0sync.h	2015-09-18 10:32:54.000000000 -0400
-+++ mysql-5.5-5.5.46/storage/innobase/include/os0sync.h	2015-10-22 11:41:43.271210221 -0400
-@@ -339,7 +339,7 @@
- 	__atomic_clear(ptr, __ATOMIC_RELEASE);
- }
+ This patch was remade due to upstream source changes, but should preserve the
+ behavior of the old one.
+Author: Lars Tangvald <lars.tangvald@oracle.com>
+Last-Update: 2016-04-19
+
+--- mysql-5.5-5.5.49.orig/storage/innobase/include/os0sync.h
++++ mysql-5.5-5.5.49/storage/innobase/include/os0sync.h
+@@ -370,7 +370,32 @@ os_atomic_clear(volatile lock_word_t* pt
  
--# elif defined(IB_STRONG_MEMORY_MODEL)
-+# else
+ # else
  
- /** Do an atomic test and set.
- @param[in,out]	ptr		Memory location to set to non-zero
-@@ -368,10 +368,6 @@
- 	return(__sync_lock_test_and_set(ptr, 0));
- }
- 
--# else
--
 -#  error "Unsupported platform"
--
++/** Do an atomic test and set.
++@param[in,out]	ptr		Memory location to set to non-zero
++@return the previous value */
++static inline
++lock_word_t
++os_atomic_test_and_set(volatile lock_word_t* ptr)
++{
++	return(__sync_lock_test_and_set(ptr, 1));
++}
++
++/** Do an atomic release.
++
++In theory __sync_lock_release should be used to release the lock.
++Unfortunately, it does not work properly alone. The workaround is
++that more conservative __sync_lock_test_and_set is used instead.
++
++Performance regression was observed at some conditions for Intel
++architecture. Disable release barrier on Intel architecture for now.
++@param[in,out]	ptr		Memory location to write to
++@return the previous value */
++static inline
++lock_word_t
++os_atomic_clear(volatile lock_word_t* ptr)
++{
++	return(__sync_lock_test_and_set(ptr, 0));
++}
+ 
  # endif /* HAVE_IB_GCC_ATOMIC_TEST_AND_SET */
  
- #elif defined(HAVE_IB_SOLARIS_ATOMICS)
