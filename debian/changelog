@@ -1,4 +1,4 @@
-mysql-5.5 (5.5.49-0+deb8u1.1) jessie-security; urgency=high
+mysql-5.5 (5.5.49-0+deb8u1) jessie-security; urgency=high
 
   * Imported Upstream version 5.5.49 to fix security issues:
     - http://www.oracle.com/technetwork/topics/security/cpuapr2016-2881694.html
