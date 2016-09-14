@@ -1,5 +1,33 @@
+mysql-5.5 (5.5.50-0+deb7u2) wheezy-security; urgency=medium
+
+  * Rebuild to follow previous wheezy-security history. The previous
+    upload was made on top of jessie-security's.
+  * Add fix-mysqlhotcopy-test-failure.patch
+  * Drop 73_fix_rpl_deadlock_innodb_test.patch
+  * Import debian/tests from jessie-security.
+    - debian/control: Add XS-Testsuite: autopkgtest stanza.
+    - debian/tests/control: Fix upstream test dependency on versioned
+      mysql-testsuite-5.5
+
+ -- Santiago R.R. <santiagorr@riseup.net>  Thu, 04 Aug 2016 15:02:44 +0200
+
+mysql-5.5 (5.5.50-0+deb7u1) wheezy-security; urgency=medium
+
+  * Non-maintainer upload by the Debian LTS Team
+  * Rebuild for wheezy-security. Imported from jessie-security to fix security
+    issues:
+    - http://www.oracle.com/technetwork/security-advisory/cpujul2016-2881720.html
+    - CVE-2016-3477 CVE-2016-3521 CVE-2016-3615 CVE-2016-5440
+
+ -- Santiago R.R. <santiagorr@riseup.net>  Tue, 26 Jul 2016 20:14:07 +0200
+
 mysql-5.5 (5.5.49-0+deb7u1) wheezy-security; urgency=high
 
+  [ Santiago Ruano Rincón ]
+  * Non-maintainer upload by the Debian LTS team. Thanks to Lars Tangvald and
+    Robie Basak for preparing and testing the package.
+
+  [ Lars Tangvald ]
   * Imported Upstream version 5.5.49 to fix security issues:
     - http://www.oracle.com/technetwork/topics/security/cpuapr2016-2881694.html
     - CVE-2016-0640 CVE-2016-0641 CVE-2016-0642 CVE-2016-0643 CVE-2016-0644
@@ -9,7 +37,7 @@ mysql-5.5 (5.5.49-0+deb7u1) wheezy-security; urgency=high
   * Remade revert-to-_sync_lock_test_and_set.patch, due to upstream source
     changes.
 
- -- Lars Tangvald <lars.tangvald@oracle.com>  Mon, 18 Apr 2016 07:31:24 +0200
+ -- Santiago Ruano Rincón <santiagorr@riseup.net>  Thu, 28 Apr 2016 18:24:58 +0200
 
 mysql-5.5 (5.5.47-0+deb7u1) wheezy-security; urgency=high
 
